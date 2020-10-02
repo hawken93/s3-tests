@@ -1,6 +1,6 @@
 from __future__ import print_function
 import sys
-import ConfigParser
+import configparser
 import boto.exception
 import boto.s3.connection
 import bunch
@@ -8,8 +8,8 @@ import itertools
 import os
 import random
 import string
-from httplib import HTTPConnection, HTTPSConnection
-from urlparse import urlparse
+from httplib2 import Http
+from urllib import parse as urlparse
 
 from .utils import region_sync_meta
 
@@ -147,46 +147,46 @@ class TargetConfig:
         self.sync_meta_wait = 0
         try:
             self.api_name = cfg.get(section, 'api_name')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             pass
         try:
             self.port = cfg.getint(section, 'port')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
         try:
             self.host=cfg.get(section, 'host')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             raise RuntimeError(
                 'host not specified for section {s}'.format(s=section)
                 )
         try:
             self.is_master=cfg.getboolean(section, 'is_master')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
         try:
             self.is_secure=cfg.getboolean(section, 'is_secure')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
 
         try:
             raw_calling_format = cfg.get(section, 'calling_format')
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             raw_calling_format = 'ordinary'
 
         try:
             self.sync_agent_addr = cfg.get(section, 'sync_agent_addr')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             pass
 
         try:
             self.sync_agent_port = cfg.getint(section, 'sync_agent_port')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             pass
 
         try:
             self.sync_meta_wait = cfg.getint(section, 'sync_meta_wait')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (configparser.NoSectionError, configparser.NoOptionError):
             pass
 
 
@@ -225,7 +225,7 @@ class RegionsInfo:
     def get(self):
         return self.m
     def iteritems(self):
-        return self.m.iteritems()
+        return self.m.items()
 
 regions = RegionsInfo()
 
@@ -258,7 +258,7 @@ _multiprocess_can_split_ = True
 
 def setup():
 
-    cfg = ConfigParser.RawConfigParser()
+    cfg = configparser.RawConfigParser()
     try:
         path = os.environ['S3TEST_CONF']
     except KeyError:
@@ -266,7 +266,7 @@ def setup():
             'To run tests, point environment '
             + 'variable S3TEST_CONF to a config file.',
             )
-    with file(path) as f:
+    with open(path) as f:
         cfg.readfp(f)
 
     global prefix
@@ -281,13 +281,13 @@ def setup():
 
     try:
         slow_backend = cfg.getboolean('fixtures', 'slow backend')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         slow_backend = False
 
     # pull the default_region out, if it exists
     try:
         default_region = cfg.get('fixtures', 'default_region')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    except (configparser.NoSectionError, configparser.NoOptionError):
         default_region = None
 
     s3.clear()
@@ -326,7 +326,7 @@ def setup():
             ]:
             try:
                 config[name][var] = cfg.get(section, var)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 pass
 
         targets[name] = RegionsConn()
